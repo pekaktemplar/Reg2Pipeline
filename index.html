@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marketing Pipeline Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        .kanban-column {
+            min-height: 400px;
+        }
+        .task-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .task-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .kanban-tasks::-webkit-scrollbar {
+            width: 8px;
+        }
+        .kanban-tasks::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .kanban-tasks::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        .kanban-tasks::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        #taskModalBackdrop {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .form-section {
+            border-top: 1px solid #e5e7eb;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        #visualizationContainer {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="antialiased text-gray-800">
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Marketing Pipeline Tracker</h1>
+            <p class="text-gray-600 mt-1">Pantau progres tim marketing Anda untuk target akhir tahun 2025.</p>
+        </header>
+
+        <!-- Controls: Filter and Add Button -->
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+            <div class="flex items-center gap-4">
+                <label for="branchFilter" class="font-medium">Filter Cabang:</label>
+                <select id="branchFilter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="Semua">Semua Cabang</option>
+                    <option value="Mataram">Mataram</option>
+                    <option value="Maluk">Maluk</option>
+                    <option value="Bali">Bali</option>
+                    <option value="Surabaya">Surabaya</option>
+                    <option value="Yogyakarta">Yogyakarta</option>
+                    <option value="Semarang">Semarang</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                 <button id="visualizationToggleBtn" class="bg-white text-gray-700 font-semibold py-2 px-3 rounded-md shadow-md hover:bg-gray-100 transition-colors flex items-center justify-center gap-2" title="Tampilkan/Sembunyikan Visualisasi">
+                    <svg id="icon-show" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.022 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                    </svg>
+                     <svg id="icon-hide" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd" />
+                        <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.303 6.546A10.048 10.048 0 00.458 10c1.274 4.057 5.022 7 9.542 7 1.126 0 2.207-.245 3.232-.697z" />
+                    </svg>
+                </button>
+                <button id="addTaskBtn" class="w-full sm:w-auto bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md shadow-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                    Tambah Pipeline Baru
+                </button>
+            </div>
+        </div>
+
+        <!-- Visualization Container -->
+        <div id="visualizationContainer" class="hidden mb-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold mb-2 text-center">Jumlah Pipeline per Status & Cabang</h3>
+                    <canvas id="statusChartCanvas"></canvas>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold mb-2 text-center">Estimasi Nilai Proyek Selesai (Rp)</h3>
+                    <canvas id="valueChartCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Rencana -->
+            <div class="bg-white rounded-lg shadow-sm"><h2 class="text-lg font-semibold p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg text-gray-700"><span class="inline-block w-3 h-3 bg-gray-400 rounded-full mr-2"></span>Rencana</h2><div id="col-rencana" class="kanban-column p-4 kanban-tasks space-y-4 overflow-y-auto max-h-[60vh]"></div></div>
+            <!-- Proses -->
+            <div class="bg-white rounded-lg shadow-sm"><h2 class="text-lg font-semibold p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg text-blue-700"><span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>Proses</h2><div id="col-proses" class="kanban-column p-4 kanban-tasks space-y-4 overflow-y-auto max-h-[60vh]"></div></div>
+            <!-- Kendala -->
+            <div class="bg-white rounded-lg shadow-sm"><h2 class="text-lg font-semibold p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg text-red-700"><span class="inline-block w-3 h-3 bg-red-500 rounded-full mr-2"></span>Kendala</h2><div id="col-kendala" class="kanban-column p-4 kanban-tasks space-y-4 overflow-y-auto max-h-[60vh]"></div></div>
+            <!-- Selesai -->
+            <div class="bg-white rounded-lg shadow-sm"><h2 class="text-lg font-semibold p-4 border-b border-gray-200 bg-gray-50 rounded-t-lg text-green-700"><span class="inline-block w-3 h-3 bg-green-500 rounded-full mr-2"></span>Selesai</h2><div id="col-selesai" class="kanban-column p-4 kanban-tasks space-y-4 overflow-y-auto max-h-[60vh]"></div></div>
+        </div>
+    </div>
+
+    <!-- Modal for Add/Edit Task -->
+    <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center">
+        <div id="taskModalBackdrop" class="absolute inset-0"></div>
+        <div class="relative bg-white rounded-lg shadow-xl w-full max-w-lg m-4 transform transition-all max-h-[90vh] flex flex-col">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 id="modalTitle" class="text-xl font-semibold">Tambah Pipeline Baru</h3>
+                    <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                </div>
+            </div>
+            <form id="taskForm" class="overflow-y-auto p-6 space-y-4">
+                <input type="hidden" id="pipelineId">
+                <!-- General Fields -->
+                <div><label for="cabang" class="block text-sm font-medium text-gray-700">Cabang</label><select id="cabang" name="cabang" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><option value="Mataram">Mataram</option><option value="Maluk">Maluk</option><option value="Bali">Bali</option><option value="Surabaya">Surabaya</option><option value="Yogyakarta">Yogyakarta</option><option value="Semarang">Semarang</option></select></div>
+                <div><label for="marketing" class="block text-sm font-medium text-gray-700">Nama Marketing</label><input type="text" id="marketing" name="marketing" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Contoh: Budi Santoso"></div>
+                <div><label for="pipeline" class="block text-sm font-medium text-gray-700">Pipeline / Rencana Kerja</label><textarea id="pipeline" name="pipeline" rows="3" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Contoh: Mengadakan seminar kesehatan"></textarea></div>
+                <div><label for="target" class="block text-sm font-medium text-gray-700">Target</label><input type="text" id="target" name="target" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Contoh: Mendapatkan 20 peserta baru"></div>
+                <div><label for="estimasiNilai" class="block text-sm font-medium text-gray-700">Estimasi Nilai Proyek (Rp)</label><input type="number" id="estimasiNilai" name="estimasiNilai" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Contoh: 50000000"></div>
+                <div><label for="dueDate" class="block text-sm font-medium text-gray-700">Batas Waktu</label><input type="date" id="dueDate" name="dueDate" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></div>
+                <div><label for="status" class="block text-sm font-medium text-gray-700">Status</label><select id="status" name="status" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"><option value="Rencana">Rencana</option><option value="Proses">Proses</option><option value="Kendala">Kendala</option><option value="Selesai">Selesai</option></select></div>
+                
+                <!-- "Proses" Specific Fields -->
+                <div id="followUpContainer" class="hidden form-section">
+                    <label class="block text-lg font-semibold text-gray-800 mb-2">Catatan Follow Up</label>
+                    <div id="followUpList" class="space-y-3"></div>
+                    <button type="button" id="addFollowUpBtn" class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>Tambah Follow Up</button>
+                </div>
+
+                <!-- "Kendala" Specific Fields -->
+                <div id="kendalaContainer" class="hidden form-section">
+                    <label class="block text-lg font-semibold text-gray-800 mb-2">Detail Kendala</label>
+                    <div id="kendalaList" class="space-y-4"></div>
+                    <button type="button" id="addKendalaBtn" class="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>Tambah Kendala</button>
+                </div>
+            </form>
+            <div class="p-6 border-t mt-auto">
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancelBtn" class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-md hover:bg-gray-300 transition-colors">Batal</button>
+                    <button type="submit" form="taskForm" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-indigo-700 transition-colors">Simpan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- ============== KONFIGURASI DAN INISIALISASI FIREBASE ============== -->
+    <!-- ================================================================= -->
+    <script type="module">
+        // Import fungsi yang dibutuhkan dari Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            onSnapshot, 
+            addDoc, 
+            doc, 
+            updateDoc, 
+            deleteDoc 
+        } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+
+        // Konfigurasi dari proyek Firebase Anda
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtP-hywKqtxRuOT--LqRwNGAu0esa8lqU",
+            authDomain: "mypipeline-19913.firebaseapp.com",
+            projectId: "mypipeline-19913",
+            storageBucket: "mypipeline-19913.firebasestorage.app",
+            messagingSenderId: "827829458043",
+            appId: "1:827829458043:web:d5e0786106e275a02ebede"
+        };
+
+        // Inisialisasi Firebase
+        const app = initializeApp(firebaseConfig);
+        
+        // Inisialisasi Cloud Firestore
+        const db = getFirestore(app);
+        const pipelinesCollection = collection(db, "pipelines");
+
+        // --- FIX: Ekspor fungsi yang dibutuhkan ke global window scope ---
+        window.firebase = {
+            db,
+            pipelinesCollection,
+            onSnapshot,
+            addDoc,
+            doc,
+            updateDoc,
+            deleteDoc
+        };
+    </script>
+    <!-- ================================================================= -->
+    <!-- ================================================================= -->
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Tunggu sebentar untuk memastikan Firebase selesai diinisialisasi dari script module
+        setTimeout(() => {
+            // DOM Elements
+            const addTaskBtn = document.getElementById('addTaskBtn');
+            const taskModal = document.getElementById('taskModal');
+            const taskModalBackdrop = document.getElementById('taskModalBackdrop');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const taskForm = document.getElementById('taskForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const branchFilter = document.getElementById('branchFilter');
+            const statusSelect = document.getElementById('status');
+            const followUpContainer = document.getElementById('followUpContainer');
+            const kendalaContainer = document.getElementById('kendalaContainer');
+            const addFollowUpBtn = document.getElementById('addFollowUpBtn');
+            const followUpList = document.getElementById('followUpList');
+            const addKendalaBtn = document.getElementById('addKendalaBtn');
+            const kendalaList = document.getElementById('kendalaList');
+            const visualizationToggleBtn = document.getElementById('visualizationToggleBtn');
+            const visualizationContainer = document.getElementById('visualizationContainer');
+            const iconShow = document.getElementById('icon-show');
+            const iconHide = document.getElementById('icon-hide');
+
+            const columns = {
+                'Rencana': document.getElementById('col-rencana'),
+                'Proses': document.getElementById('col-proses'),
+                'Selesai': document.getElementById('col-selesai'),
+                'Kendala': document.getElementById('col-kendala'),
+            };
+
+            // Application State
+            let localPipelinesCache = []; // Cache lokal untuk data
+            let editingPipelineId = null;
+            let statusChart = null;
+            let valueChart = null;
+
+            // --- DATA MANAGEMENT DENGAN FIREBASE ---
+
+            // Mendengarkan perubahan data dari Firestore secara real-time
+            const listenForPipelines = () => {
+                window.firebase.onSnapshot(window.firebase.pipelinesCollection, (snapshot) => {
+                    localPipelinesCache = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
+                    renderPipelines();
+                    updateVisualizations();
+                });
+            };
+
+            // --- UI RENDERING ---
+            const formatCurrency = (value) => {
+                if (!value || isNaN(value)) return 'N/A';
+                return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+            };
+
+            const createTaskCard = (pipeline) => {
+                const card = document.createElement('div');
+                card.className = 'task-card bg-white p-4 rounded-lg border border-gray-200 shadow-sm cursor-pointer';
+                card.dataset.id = pipeline.id;
+
+                const statusColors = {
+                    'Rencana': 'border-l-4 border-gray-400', 'Proses': 'border-l-4 border-blue-500',
+                    'Selesai': 'border-l-4 border-green-500', 'Kendala': 'border-l-4 border-red-500',
+                };
+                card.classList.add(...statusColors[pipeline.status].split(' '));
+
+                const today = new Date(); today.setHours(0,0,0,0);
+                const dueDate = new Date(pipeline.dueDate);
+                let dateInfo = `<p class="text-xs text-gray-500 mt-1">Batas Waktu: ${new Date(pipeline.dueDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })}</p>`;
+                if (dueDate < today && pipeline.status !== 'Selesai') {
+                    dateInfo = `<p class="text-xs text-red-600 font-semibold mt-1">Batas Waktu: Terlewat</p>`;
+                }
+
+                let extraInfo = '';
+                if (pipeline.status === 'Proses' && pipeline.followUps && pipeline.followUps.length > 0) {
+                    const latestFollowUp = pipeline.followUps[pipeline.followUps.length - 1];
+                    extraInfo = `<div class="mt-3 bg-blue-50 p-2 rounded-md border border-blue-200"><p class="text-xs font-semibold text-blue-800">Follow Up Terakhir (${new Date(latestFollowUp.date).toLocaleDateString('id-ID')}):</p><p class="text-xs text-blue-700">${latestFollowUp.note}</p></div>`;
+                }
+                if (pipeline.status === 'Kendala' && pipeline.kendalaList && pipeline.kendalaList.length > 0) {
+                    const latestKendala = pipeline.kendalaList[pipeline.kendalaList.length - 1];
+                    extraInfo = `<div class="mt-3 bg-red-50 p-2 rounded-md border border-red-200"><p class="text-xs font-semibold text-red-800">Kendala Terbaru:</p><p class="text-xs text-red-700">${latestKendala.detail}</p><p class="text-xs font-semibold text-red-800 mt-1">Solusi:</p><p class="text-xs text-red-700">${latestKendala.solusi || 'Belum ada'}</p></div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h4 class="font-bold text-gray-800 pr-2">${pipeline.pipeline}</h4>
+                        <div class="flex-shrink-0 relative group">
+                            <button class="menu-btn p-1 rounded-full hover:bg-gray-200"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" /></svg></button>
+                            <div class="menu-dropdown absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg z-10 hidden"><a href="#" class="edit-btn block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Edit</a><a href="#" class="delete-btn block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Hapus</a></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600 my-1">Target: ${pipeline.target}</p>
+                    <p class="text-sm font-semibold text-green-700">${formatCurrency(pipeline.estimasiNilai)}</p>
+                    ${extraInfo}
+                    <div class="flex justify-between items-end mt-3">
+                        <div>
+                            <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-indigo-600 bg-indigo-200">${pipeline.cabang}</span>
+                            <span class="text-xs font-semibold inline-block py-1 px-2 uppercase rounded-full text-gray-600 bg-gray-200">${pipeline.marketing}</span>
+                        </div>
+                        <div class="text-right">${dateInfo}</div>
+                    </div>
+                `;
+                card.querySelector('.menu-btn').addEventListener('click', (e) => { e.stopPropagation(); document.querySelectorAll('.menu-dropdown').forEach(d => { if (d !== card.querySelector('.menu-dropdown')) d.classList.add('hidden'); }); card.querySelector('.menu-dropdown').classList.toggle('hidden'); });
+                card.querySelector('.edit-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); openModalForEdit(pipeline.id); });
+                card.querySelector('.delete-btn').addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); deletePipeline(pipeline.id); });
+                return card;
+            };
+            
+            const renderPipelines = () => {
+                Object.values(columns).forEach(col => col.innerHTML = '');
+                const filteredPipelines = localPipelinesCache.filter(p => branchFilter.value === 'Semua' || p.cabang === branchFilter.value);
+                filteredPipelines.forEach(pipeline => {
+                    const card = createTaskCard(pipeline);
+                    columns[pipeline.status].appendChild(card);
+                });
+            };
+
+            // --- VISUALIZATION ---
+            const updateVisualizations = () => {
+                const branches = ['Mataram', 'Maluk', 'Bali', 'Surabaya', 'Yogyakarta', 'Semarang'];
+                const statuses = ['Rencana', 'Proses', 'Kendala', 'Selesai'];
+                
+                const statusData = {};
+                branches.forEach(b => statusData[b] = { 'Rencana': 0, 'Proses': 0, 'Kendala': 0, 'Selesai': 0 });
+                
+                localPipelinesCache.forEach(p => {
+                    if (statusData[p.cabang]) {
+                        statusData[p.cabang][p.status]++;
+                    }
+                });
+
+                const statusDatasets = statuses.map(status => {
+                    return {
+                        label: status,
+                        data: branches.map(branch => statusData[branch][status]),
+                        backgroundColor: {
+                            'Rencana': 'rgba(156, 163, 175, 0.6)', 'Proses': 'rgba(59, 130, 246, 0.6)',
+                            'Kendala': 'rgba(239, 68, 68, 0.6)', 'Selesai': 'rgba(34, 197, 94, 0.6)',
+                        }[status],
+                        borderColor: {
+                            'Rencana': 'rgba(156, 163, 175, 1)', 'Proses': 'rgba(59, 130, 246, 1)',
+                            'Kendala': 'rgba(239, 68, 68, 1)', 'Selesai': 'rgba(34, 197, 94, 1)',
+                        }[status],
+                        borderWidth: 1
+                    };
+                });
+
+                renderStatusChart(branches, statusDatasets);
+
+                const valueSums = Array(branches.length).fill(0);
+                localPipelinesCache.filter(p => p.status === 'Selesai').forEach(p => {
+                    const branchIndex = branches.indexOf(p.cabang);
+                    if (branchIndex !== -1) {
+                        valueSums[branchIndex] += p.estimasiNilai;
+                    }
+                });
+                renderValueChart(branches, valueSums);
+            };
+
+            const renderStatusChart = (labels, datasets) => {
+                const ctx = document.getElementById('statusChartCanvas').getContext('2d');
+                if (statusChart) statusChart.destroy();
+                statusChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: datasets }, options: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } } });
+            };
+
+            const renderValueChart = (labels, data) => {
+                const ctx = document.getElementById('valueChartCanvas').getContext('2d');
+                if (valueChart) valueChart.destroy();
+                valueChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Total Nilai (Rp)', data: data, backgroundColor: 'rgba(139, 92, 246, 0.6)', borderColor: 'rgba(139, 92, 246, 1)', borderWidth: 1 }] }, options: { scales: { y: { beginAtZero: true, ticks: { callback: (value) => formatCurrency(value) } } } } });
+            };
+
+            // --- MODAL & FORM HANDLING ---
+            const toggleConditionalFields = () => {
+                const selectedStatus = statusSelect.value;
+                followUpContainer.classList.toggle('hidden', selectedStatus !== 'Proses');
+                kendalaContainer.classList.toggle('hidden', selectedStatus !== 'Kendala');
+            };
+
+            const addFollowUpField = (container, followUp = { date: '', note: '' }) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'follow-up-entry flex items-center gap-2';
+                entryDiv.innerHTML = `<input type="date" value="${followUp.date}" class="follow-up-date block w-1/3 rounded-md border-gray-300 shadow-sm text-sm" required><input type="text" value="${followUp.note}" class="follow-up-note block w-2/3 rounded-md border-gray-300 shadow-sm text-sm" placeholder="Catatan follow up" required><button type="button" class="remove-follow-up-btn text-red-500 hover:text-red-700 p-1 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button>`;
+                entryDiv.querySelector('.remove-follow-up-btn').addEventListener('click', () => entryDiv.remove());
+                container.appendChild(entryDiv);
+            };
+
+            const addKendalaField = (kendala = { detail: '', solusi: '', followUps: [] }) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'kendala-entry border-t pt-4';
+                entryDiv.innerHTML = `<div class="flex justify-between items-center mb-2"><label class="block text-sm font-medium text-gray-700">Detail Kendala & Solusi</label><button type="button" class="remove-kendala-btn text-red-500 hover:text-red-700 p-1 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg></button></div><textarea class="kendala-detail block w-full rounded-md border-gray-300 shadow-sm text-sm" rows="2" placeholder="Deskripsi Kendala" required>${kendala.detail}</textarea><textarea class="kendala-solusi mt-2 block w-full rounded-md border-gray-300 shadow-sm text-sm" rows="2" placeholder="Alternatif Solusi">${kendala.solusi}</textarea><div class="mt-3 pl-4 border-l-2"><label class="block text-xs font-semibold text-gray-600 mb-2">Follow Up Kendala</label><div class="kendala-follow-up-list space-y-2"></div><button type="button" class="add-kendala-follow-up-btn mt-2 text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" /></svg>Tambah Follow Up</button></div>`;
+                const followUpContainer = entryDiv.querySelector('.kendala-follow-up-list');
+                if (kendala.followUps) {
+                    kendala.followUps.forEach(fu => addFollowUpField(followUpContainer, fu));
+                }
+                entryDiv.querySelector('.remove-kendala-btn').addEventListener('click', () => entryDiv.remove());
+                entryDiv.querySelector('.add-kendala-follow-up-btn').addEventListener('click', () => addFollowUpField(followUpContainer));
+                kendalaList.appendChild(entryDiv);
+            };
+
+            const openModal = () => { taskModal.classList.remove('hidden'); taskModal.classList.add('flex'); };
+            const closeModal = () => { taskModal.classList.add('hidden'); taskModal.classList.remove('flex'); taskForm.reset(); editingPipelineId = null; followUpList.innerHTML = ''; kendalaList.innerHTML = ''; };
+
+            const openModalForEdit = (id) => {
+                const pipeline = localPipelinesCache.find(p => p.id === id);
+                if (!pipeline) return;
+                editingPipelineId = id;
+                modalTitle.textContent = 'Edit Pipeline';
+                Object.keys(pipeline).forEach(key => {
+                    if(taskForm.elements[key]) taskForm.elements[key].value = pipeline[key];
+                });
+                followUpList.innerHTML = '';
+                if (pipeline.followUps) pipeline.followUps.forEach(fu => addFollowUpField(followUpList, fu));
+                kendalaList.innerHTML = '';
+                if (pipeline.kendalaList) pipeline.kendalaList.forEach(k => addKendalaField(k));
+                toggleConditionalFields();
+                openModal();
+            };
+
+            taskForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(taskForm);
+                
+                const originalPipeline = editingPipelineId
+                    ? localPipelinesCache.find(p => p.id === editingPipelineId)
+                    : { followUps: [], kendalaList: [] };
+
+                const pipelineData = {
+                    cabang: formData.get('cabang'), marketing: formData.get('marketing'),
+                    pipeline: formData.get('pipeline'), target: formData.get('target'),
+                    estimasiNilai: parseFloat(formData.get('estimasiNilai')) || 0,
+                    dueDate: formData.get('dueDate'), status: formData.get('status'),
+                    followUps: originalPipeline.followUps || [],
+                    kendalaList: originalPipeline.kendalaList || []
+                };
+                
+                pipelineData.followUps = [];
+                document.querySelectorAll('#followUpList .follow-up-entry').forEach(entry => {
+                    const date = entry.querySelector('.follow-up-date').value;
+                    const note = entry.querySelector('.follow-up-note').value;
+                    if (date && note) pipelineData.followUps.push({ date, note });
+                });
+
+                pipelineData.kendalaList = [];
+                document.querySelectorAll('#kendalaList .kendala-entry').forEach(entry => {
+                    const detail = entry.querySelector('.kendala-detail').value;
+                    const solusi = entry.querySelector('.kendala-solusi').value;
+                    if (detail) {
+                        const kendalaFollowUps = [];
+                        entry.querySelectorAll('.follow-up-entry').forEach(fuEntry => {
+                            const date = fuEntry.querySelector('.follow-up-date').value;
+                            const note = fuEntry.querySelector('.follow-up-note').value;
+                            if(date && note) kendalaFollowUps.push({date, note});
+                        });
+                        pipelineData.kendalaList.push({ detail, solusi, followUps: kendalaFollowUps });
+                    }
+                });
+                
+                try {
+                    if (editingPipelineId) {
+                        const docRef = window.firebase.doc(window.firebase.db, "pipelines", editingPipelineId);
+                        await window.firebase.updateDoc(docRef, pipelineData);
+                    } else {
+                        await window.firebase.addDoc(window.firebase.pipelinesCollection, pipelineData);
+                    }
+                } catch (error) {
+                    console.error("Error saving document: ", error);
+                }
+                
+                closeModal();
+            });
+
+            // --- EVENT LISTENERS ---
+            addTaskBtn.addEventListener('click', () => { modalTitle.textContent = 'Tambah Pipeline Baru'; openModal(); toggleConditionalFields(); });
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            taskModalBackdrop.addEventListener('click', closeModal);
+            branchFilter.addEventListener('change', renderPipelines);
+            statusSelect.addEventListener('change', toggleConditionalFields);
+            addFollowUpBtn.addEventListener('click', () => addFollowUpField(followUpList));
+            addKendalaBtn.addEventListener('click', () => addKendalaField());
+            visualizationToggleBtn.addEventListener('click', () => {
+                visualizationContainer.classList.toggle('hidden');
+                iconShow.classList.toggle('hidden');
+                iconHide.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => { if (!e.target.closest('.group')) { document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.add('hidden')); } });
+
+            // --- ACTIONS ---
+            const deletePipeline = async (id) => {
+                // Menggunakan confirm() bawaan browser untuk kesederhanaan
+                if (confirm("Apakah Anda yakin ingin menghapus pipeline ini?")) {
+                    try {
+                        await window.firebase.deleteDoc(window.firebase.doc(window.firebase.db, "pipelines", id));
+                    } catch (error) {
+                        console.error("Error removing document: ", error);
+                    }
+                }
+            };
+            
+            // --- INITIALIZATION ---
+            listenForPipelines(); // Mulai mendengarkan data dari Firebase
+
+        }, 100); // Penundaan 100ms untuk memastikan db siap
+    });
+    </script>
+</body>
+</html>
